@@ -1,0 +1,14 @@
+{
+  "name": "kasir-toko",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.0",
+    "@capacitor/share": "^6.0.0",
+    "@capacitor-mlkit/barcode-scanning": "^6.0.0",
+    "@kduma-autoid/capacitor-bluetooth-printer": "^0.2.1"
+  },
+  "devDependencies": { "@capacitor/cli": "^6.0.0" }
+}
