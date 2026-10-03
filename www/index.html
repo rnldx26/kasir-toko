@@ -84,9 +84,17 @@ const t=total(),paid=+$('#pay').value||t;if(paid<t)return toast('Uang kurang '+r
 const s={t:Date.now(),items:it,total:t,paid,c:{n:cust.n.trim(),h:cust.h.trim()}};it.forEach(i=>{D.products.find(x=>x.id==i.id).stock-=i.q});D.sales=D.sales.concat(s).slice(-200);save();cart={};cust={n:'',h:''};vK();hd();showR(s)}
 
 /* ---------- Produk ---------- */
-function vP(){$('#v').innerHTML=`<button class="pri" style="margin:0 0 10px" onclick="openP()">Tambah produk</button><input id="pq" placeholder="Cari produk"><div id="pl"></div>`;$('#pq').oninput=lp;lp()}
-function lp(){const k=$('#pq').value.toLowerCase();const a=D.products.filter(p=>!k||p.name.toLowerCase().includes(k)||p.barcode.includes(k));
-$('#pl').innerHTML=a.length?a.map(p=>`<div class="it" onclick="openP('${p.id}')"><div>${esc(p.name)}<small>${esc(p.barcode)||'tanpa barcode'} · stok <span class="${p.stock<=0?'low':''}">${p.stock}</span></small></div><b>${rp(p.price)}</b></div>`).join(''):'<p class="empty">Belum ada produk.</p>'}
+let mg=false,sel=new Set();
+function vP(){mg=false;sel.clear();$('#v').innerHTML=`<div class="row"><button class="pri" style="margin:0 0 10px;flex:2" onclick="openP()">Tambah produk</button><button class="sec" style="flex:1;margin-bottom:10px" id="mgb" onclick="togMg()">Kelola</button></div><div id="mb"></div><input id="pq" placeholder="Cari produk"><div id="pl"></div>`;$('#pq').oninput=lp;lp()}
+const vis=()=>{const k=$('#pq').value.toLowerCase();return D.products.filter(p=>!k||p.name.toLowerCase().includes(k)||p.barcode.includes(k))};
+function togMg(){mg=!mg;sel.clear();lp()}
+function tg(id){sel.has(id)?sel.delete(id):sel.add(id);lp()}
+function selAll(){const a=vis(),all=a.every(p=>sel.has(p.id));a.forEach(p=>all?sel.delete(p.id):sel.add(p.id));lp()}
+function delSel(){const n=sel.size;if(!n)return toast('Pilih produk yang mau dihapus');if(!confirm('Hapus '+n+' produk terpilih? Riwayat penjualan tidak ikut terhapus.'))return;
+D.products=D.products.filter(p=>!sel.has(p.id));sel.forEach(id=>delete cart[id]);sel.clear();save();lp();toast(n+' produk dihapus')}
+function lp(){const a=vis();$('#mgb').textContent=mg?'Selesai':'Kelola';
+$('#mb').innerHTML=mg?`<div class="row" style="margin-bottom:8px"><button class="sec" style="flex:1" onclick="selAll()">${a.length&&a.every(p=>sel.has(p.id))?'Batal pilih':'Pilih semua'}</button><button class="sec" style="flex:1;color:var(--bad)" onclick="delSel()">Hapus (${sel.size})</button></div>`:'';
+$('#pl').innerHTML=a.length?a.map(p=>`<div class="it" onclick="${mg?`tg('${p.id}')`:`openP('${p.id}')`}">${mg?`<input type="checkbox" style="width:22px;height:22px;padding:0;margin:0;pointer-events:none" ${sel.has(p.id)?'checked':''} tabindex="-1">`:''}<div style="flex:1">${esc(p.name)}<small>${esc(p.barcode)||'tanpa barcode'} · stok <span class="${p.stock<=0?'low':''}">${p.stock}</span></small></div><b>${rp(p.price)}</b></div>`).join(''):'<p class="empty">Belum ada produk.</p>'}
 function openP(id){editId=id||null;const p=D.products.find(x=>x.id==id)||{name:'',barcode:'',price:'',stock:''};$('#ft').textContent=id?'Ubah produk':'Produk baru';$('#fn').value=p.name;$('#fb').value=p.barcode;$('#fp').value=p.price;$('#fs').value=p.stock;$('#fx').style.display=id?'':'none';$('#fd').showModal()}
 function saveP(){const n=$('#fn').value.trim(),b=$('#fb').value.trim(),pr=+$('#fp').value,s=+$('#fs').value||0;if(!n||!(pr>=0)||$('#fp').value==='')return toast('Isi nama dan harga produk');
 if(b&&D.products.some(x=>x.barcode===b&&x.id!=editId))return toast('Barcode sudah dipakai produk lain');
@@ -139,7 +147,7 @@ const ld=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+
 function backup(){dl('backup-kasir-'+ld(Date.now())+'.json',JSON.stringify(D))}
 function restore(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!Array.isArray(x.products)||!Array.isArray(x.sales)||!x.store)throw 0;if(!confirm('Ganti semua data saat ini dengan isi backup ini?'))return;x.store=Object.assign({w:32,mode:'bt'},x.store);D=x;cart={};save();hd();vT();toast('Backup dipulihkan')}catch(e){toast('File backup tidak valid')}};r.readAsText(f);i.value=''}
 let cur=null;
-function showR(s){cur=s;$('#rt').innerHTML=`<b style="font-size:22px">${rp(s.total)}</b><div class="empty" style="padding:2px 0 10px">Kembalian ${rp(s.paid-s.total)}</div>`;$('#rd').showModal()}
+function showR(s){cur=s;setTimeout(()=>prep(s),50);$('#rt').innerHTML=`<b style="font-size:22px">${rp(s.total)}</b><div class="empty" style="padding:2px 0 10px">Kembalian ${rp(s.paid-s.total)}</div>`;$('#rd').showModal()}
 function rcv(L){const w=D.store.w,fs=22,lh=30,W=Math.round(w*fs*.6+48),H=L.length*lh+48,s=2,c=document.createElement('canvas');c.width=W*s;c.height=H*s;const x=c.getContext('2d');x.scale(s,s);x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#000';x.textBaseline='top';
 L.forEach(([t,ce,b],i)=>{x.font=(b?'bold ':'')+fs+'px monospace';x.textAlign=ce?'center':'left';x.fillText(t,ce?W/2:24,24+i*lh)});return c}
 function pdfOf(jpg,w,h,pw){const ph=(pw*h/w).toFixed(2),E=new TextEncoder(),parts=[],off=[];let len=0;
@@ -150,8 +158,9 @@ off[4]=len;push(`4 0 obj\n<</Type/XObject/Subtype/Image/Width ${w}/Height ${h}/C
 const c=`q ${pw} 0 0 ${ph} 0 0 cm /I Do Q`;obj(5,`<</Length ${c.length}>>\nstream\n${c}\nendstream`);
 const x=len;push('xref\n0 6\n0000000000 65535 f \n'+[1,2,3,4,5].map(n=>String(off[n]).padStart(10,'0')+' 00000 n \n').join(''));
 push(`trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`);return new Blob(parts,{type:'application/pdf'})}
-async function exp(fmt){try{const c=rcv(rcpt(cur)),j=await new Promise(r=>c.toBlob(r,'image/jpeg',.92)),nm='struk-'+ld(cur.t)+'-'+String(cur.t).slice(-5);
-if(fmt==='jpg')return dl(nm+'.jpg',j);dl(nm+'.pdf',pdfOf(new Uint8Array(await j.arrayBuffer()),c.width,c.height,D.store.w==32?164:227))}catch(e){toast('Gagal membuat file')}}
+let pj=null,busy=false;
+function prep(s){const c=rcv(rcpt(s)),j=new Promise(r=>c.toBlob(r,'image/jpeg',.92));pj={s,j,p:j.then(async b=>pdfOf(new Uint8Array(await b.arrayBuffer()),c.width,c.height,D.store.w==32?164:227))}}
+async function exp(fmt){if(busy)return;busy=true;toast('Menyiapkan file...');try{if(!pj||pj.s!==cur)prep(cur);const nm='struk-'+ld(cur.t)+'-'+String(cur.t).slice(-5);await dl(nm+'.'+fmt,await(fmt==='jpg'?pj.j:pj.p))}catch(e){toast('Gagal membuat file')}busy=false}
 function vR(){$('#v').innerHTML=`<label>Tanggal laporan</label><input type="date" id="rdt" value="${ld(Date.now())}"><div id="rb"></div>`;$('#rdt').onchange=rr;rr()}
 const daySales=()=>D.sales.filter(s=>ld(s.t)==$('#rdt').value);
 function agg(S){const m={};S.forEach(s=>s.items.forEach(i=>{const o=m[i.n]||(m[i.n]={q:0,v:0});o.q+=i.q;o.v+=i.q*i.p}));return Object.entries(m).sort((a,b)=>b[1].v-a[1].v)}
