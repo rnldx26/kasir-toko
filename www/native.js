@@ -14,7 +14,7 @@ window.conn=async()=>{try{
  const d=devices[i];if(!d)return;
  await PR.connect({address:d.address});dev=d;pname=d.name;
  if($('#ps'))$('#ps').textContent='Terhubung: '+pname;toast('Printer terhubung')
-}catch(e){toast('Gagal menyambung: '+(e.message||e))}};
+}catch(e){const m=String(e.message||e);toast(/BLUETOOTH|permission/i.test(m)?'Izin Bluetooth belum diberikan. Buka Info Aplikasi > Izin > Perangkat di sekitar > Izinkan.':'Gagal menyambung: '+m)}};
 const o=window.out;
 window.out=async L=>{if(D.store.mode!=='bt')return o(L);
  try{if(!dev)return toast('Printer belum tersambung. Sambungkan di tab Toko.');
